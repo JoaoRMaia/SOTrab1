@@ -7,6 +7,7 @@ typedef struct Thread{
 	int dur;
 	int pri;
 	int twait;
+	int termino;
 }thread;
 
 typedef struct Resultado{
@@ -16,7 +17,7 @@ typedef struct Resultado{
 	int t;
 }resultado;
 
-void bsort(thread *lista){                 //ordena baseado no menor ingresso e como desempate a menor prioridade
+void bsort(thread *lista){                 // Ordena baseado no menor ingresso e como desempate a menor prioridade
 	thread aux;
 	for (int i = 0; i < nthreads ; i++){
 		for (int j = 0 ; j < nthreads ; j++){
@@ -42,10 +43,19 @@ int tTotal(thread *lista) {                // Retorna o tempo total gasto pelos 
 	}
 	return t;
 }
+float tempoMedio( thread *threads) {       // Retorna o tempo médio de espera.
+	float aux = 0;
+	for ( int i = 0 ; i < nthreads ; i++){
+		aux += threads[i].twait;
+	}
+	aux /= nthreads;
+	return aux;
+}
 
 resultado FCFS( thread *threads) {
 	resultado r;
 	r.t = 0;
+	r.tc = 0;
 	bsort(threads);
 	int tempototal = tTotal(threads);
 	int i,j;
@@ -59,7 +69,9 @@ resultado FCFS( thread *threads) {
 				}
 			}
 		}
+		r.tc++;
 	}
+	r.tm = tempoMedio(threads);
 	
 	return r;
 }
@@ -71,4 +83,3 @@ int main(int argc, char **argv)
 	
 	return 0;
 }
-
