@@ -5,7 +5,7 @@
 using namespace std;
 
 struct Page;
-static const int N_QUADROS = 1024;
+static const int N_QUADROS = 64;
 
 vector<int> PIDs;
 vector<Page> Pagetable;
