@@ -5,12 +5,12 @@
 using namespace std;
 
 struct Page;
-static const int N_QUADROS = 1024;
+static const int N_QUADROS = 64;
 
 vector<int> PIDs;
 vector<Page> Pagetable;
 int RAM[N_QUADROS];
-int QdAtual = 0;
+int QdAtual;
 
 struct Page{																			// Struct que representa uma pagina da pagetable
 	Page() : valido(0),presente(0),frame(0) {}
@@ -51,13 +51,49 @@ void PoeNaRam ( int p) {													// Faz exatamente o que se espera
 		if ( p == it.frame ) {
 			RAM[QdAtual%N_QUADROS] = p;
 			it.presente = 1;
-			for ( int i = 0 ; i < N_QUADROS ; i++)
 			return;
 		}
 	}
 }
 
+void PoeNaRamLRU ( int p) {													// Faz exatamente o que se espera
+	for ( auto& it : Pagetable ){
+		if ( p == it.frame ) {
+			RAM[min(QdAtual,N_QUADROS-1)] = p;
+			it.presente = 1;
+			return;
+		}
+	}
+}
+
+void TiraDaRamLRU() {                                // Note, essa função não realmente retira da ram, so marca na pagetable que tal processo				   	
+	int p = RAM[min(QdAtual,N_QUADROS-1)]; 								// não está na RAM, quem realmente tira é a função que é chamada em seguida, PoeNaRam, que sobreescreve	
+	if (QdAtual < N_QUADROS) return;	// <------       Serve para não tirar elementos quando a RAM ainda não estiver preenchida
+	for ( auto& it : Pagetable ){
+		if ( p == it.frame ) {
+			it.presente = 0;
+			return;
+		}
+	}
+}
+void Usa(int p) {
+	int PosProc;
+	int aux;
+	cout << "Entrei em usa" << endl;
+	for ( int i = 0 ; i < N_QUADROS ; i++) if (RAM[i] == p) {
+		PosProc = i;
+		cout << "Encontrei o Processo na posição " << PosProc;
+	}
+	for ( int i = PosProc ; i > 0 ; i--) {
+		cout << "Acessando posições " << i << " e " << i-1 << endl;
+		aux = RAM[i];
+		RAM[i] = RAM[i-1];
+		RAM[i-1] = aux;
+	} 
+}
+
 int FIFO (vector<int> Acessos) {
+	QdAtual = 0;
 	int PagFault = 0;
 	int EstadoPag;
 	for ( auto PID : Acessos ) {
@@ -80,6 +116,31 @@ int FIFO (vector<int> Acessos) {
 	return PagFault;
 }
 
+int LRU (vector<int> Acessos) {
+	QdAtual = 0;
+	int PagFault = 0;
+	int EstadoPag;
+	for ( auto PID : Acessos ) {
+		EstadoPag = Find(PID);
+		if ( EstadoPag == 2) Usa(PID);
+		
+		else if (EstadoPag == 1){  // Caso seja valido e não esteja na RAM, tire um elemento da RAM e coloque o atual
+			TiraDaRamLRU();
+			PoeNaRamLRU(PID);
+			QdAtual++;
+			PagFault++;
+		}
+		else {										// Caso não seja válido, crie a pagina, retire uma pagina da RAM e coloque a atual
+			Pagetable.push_back(Page{PID});
+			TiraDaRamLRU();
+			PoeNaRamLRU(PID);
+			QdAtual++;
+			PagFault++;
+		}
+	}
+	return PagFault;
+}
+
 
 int main (int argc, char **argv) {
 	
@@ -90,7 +151,8 @@ int main (int argc, char **argv) {
 		if (feof(stdin)) break;
 		PIDs.push_back(PID);
 	}
-	cout << FIFO(PIDs);
+	//cout << FIFO(PIDs);
+	cout << LRU(PIDs);
 	
 	return 0;
 }
