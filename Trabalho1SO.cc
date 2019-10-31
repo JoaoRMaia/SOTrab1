@@ -6,11 +6,11 @@
 using namespace std;
 
 struct Page;
-static const int N_QUADROS = 64;
+const int N_QUADROS = 64;
 
 vector<int> PIDs;
 vector<Page> Pagetable;
-int RAM[N_QUADROS];
+int* RAM;
 int QdAtual;
 
 struct Page{																			// Struct que representa uma pagina da pagetable
@@ -220,7 +220,8 @@ int OPT (vector<int> Acessos) {
 
 int main (int argc, char **argv) {
 	
-
+	if (argc == 1) cout << "Uso incorreto, use: " << argv[0] << " Número de Quadros " << endl;
+	RAM =(int*) malloc(sizeof(int)*atoi(argv[1]));
 	int PID;
 	while (!feof(stdin)){				// le os acessos e os guarda em um vector
 		cin >> PID;
@@ -229,7 +230,7 @@ int main (int argc, char **argv) {
 	}
 	//cout << FIFO(PIDs);
 	//cout << LRU(PIDs);
-	//cout << OPT(PIDs);
+	cout << OPT(PIDs);
 	
 	return 0;
 }
